@@ -25,7 +25,7 @@ public class MatrixInt
     {
         return _matrix;
     }
-    
+
     public int this[int i, int j]
     {
         get { return _matrix[i, j]; }
@@ -88,6 +88,47 @@ public class MatrixInt
         return matrix.Transpose();
     }
 
+    public static MatrixInt GenerateAugmentedMatrix(MatrixInt matrixA, MatrixInt matrixB)
+    {
+        MatrixInt augmentedMatrix = new MatrixInt(matrixA.NbLines, matrixA.NbColumns + matrixB.NbColumns);
+
+        for (int i = 0; i < matrixA.NbLines; i++)
+        {
+            for (int j = 0; j < matrixA.NbColumns; j++)
+            {
+                augmentedMatrix[i, j] = matrixA[i, j];
+            }
+        }
+
+        for (int i = 0; i < matrixB.NbLines; i++)
+        {
+            augmentedMatrix[i, matrixA.NbLines] = matrixB[i, 0];
+        }
+
+        return augmentedMatrix;
+    }
+
+    public (MatrixInt, MatrixInt) Split(int columnIndex)
+    {
+        MatrixInt matrixA = new MatrixInt(NbLines, columnIndex + 1);
+        MatrixInt matrixB = new MatrixInt(NbLines, columnIndex - 1);
+
+        for (int i = 0; i < NbLines; i++)
+        {
+            for (int j = 0; j < matrixA.NbColumns; j++)
+            {
+                matrixA[i, j] = _matrix[i, j];
+            }
+        }
+
+        for (int i = 0; i < NbLines; i++)
+        {
+            matrixB[i, 0] = _matrix[i, columnIndex + 1];
+        }
+
+        return (matrixA, matrixB);
+    }
+
     #region MathFunctions
 
     public void Multiply(int scalar)
@@ -141,7 +182,7 @@ public class MatrixInt
         {
             throw new MatrixSumException("Matrices does not have the same size");
         }
-        
+
         for (int i = 0; i < NbLines; i++)
         {
             for (int j = 0; j < NbColumns; j++)
