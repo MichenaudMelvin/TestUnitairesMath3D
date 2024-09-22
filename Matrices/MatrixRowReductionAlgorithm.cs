@@ -5,10 +5,12 @@ public class MatrixRowReductionAlgorithm
     public static (MatrixFloat, MatrixFloat) Apply(MatrixFloat matrixA, MatrixFloat matrixB)
     {
         MatrixFloat augmentedMatrix = MatrixFloat.GenerateAugmentedMatrix(matrixA, matrixB);
-    
-        for (int j = 0; j < augmentedMatrix.NbColumns;)
+
+        bool bTryToBeInverted = matrixB.NbColumns != 1;
+
+        for (int j = 0; j < matrixA.NbColumns;)
         {
-            for (int i = 0; i < augmentedMatrix.NbColumns; i++)
+            for (int i = 0; i < matrixA.NbColumns; i++)
             {
                 float maxValue = float.MinValue;
                 for (int l = i; l < augmentedMatrix.NbLines; l++)
@@ -19,9 +21,17 @@ public class MatrixRowReductionAlgorithm
                     }
                 }
 
+                bool bCannotBeInverted = true;
                 for (int k = 0; k < augmentedMatrix.NbLines; k++)
                 {
-                    if (k >= i && augmentedMatrix[k, j] != 0 && augmentedMatrix[k, j] >= maxValue)
+                    if (augmentedMatrix[k, j] == 0)
+                    {
+                        continue;
+                    }
+
+                    bCannotBeInverted = false;
+
+                    if (k >= i && augmentedMatrix[k, j] >= maxValue)
                     {
                         if (k != i)
                         {
@@ -40,12 +50,16 @@ public class MatrixRowReductionAlgorithm
 
                         break;
                     }
+                }
 
+                if (bCannotBeInverted && bTryToBeInverted)
+                {
+                    throw new MatrixInvertException("This matrix cannot be inverted.");
                 }
                 j++;
             }
         }
 
-        return augmentedMatrix.Split(matrixA.NbLines - 1);
+        return augmentedMatrix.Split(matrixA.NbColumns - 1);
     }
 }

@@ -2,15 +2,19 @@ namespace TestUnitaires;
 
 public class MatrixFloat
 {
+    #region ClassDefaults
+
     float[,] _matrix;
 
     public int NbLines {get => _matrix.GetLength(0);}
     public int NbColumns {get => _matrix.GetLength(1);}
+    public int MatrixSize {get => NbLines * NbColumns;}
 
     public MatrixFloat(float[,] newMatrix)
     {
         _matrix = newMatrix;
     }
+
     public MatrixFloat(int lines, int columns)
     {
         _matrix = new float[lines, columns];
@@ -31,6 +35,10 @@ public class MatrixFloat
         get { return _matrix[i, j]; }
         set { _matrix[i, j] = value; }
     }
+
+    #endregion
+
+    #region MatrixFunctions
 
     public bool IsIdentity()
     {
@@ -102,7 +110,10 @@ public class MatrixFloat
 
         for (int i = 0; i < matrixB.NbLines; i++)
         {
-            augmentedMatrix[i, matrixA.NbLines] = matrixB[i, 0];
+            for (int j = 0; j < matrixB.NbColumns; j++)
+            {
+                augmentedMatrix[i, matrixA.NbLines + j] = matrixB[i, j];
+            }
         }
 
         return augmentedMatrix;
@@ -110,8 +121,10 @@ public class MatrixFloat
 
     public (MatrixFloat, MatrixFloat) Split(int columnIndex)
     {
-        MatrixFloat matrixA = new MatrixFloat(NbLines, columnIndex + 1);
-        MatrixFloat matrixB = new MatrixFloat(NbLines, columnIndex - 1);
+        int aSize = columnIndex + 1;
+        int bSize = NbColumns - aSize;
+        MatrixFloat matrixA = new MatrixFloat(NbLines, aSize);
+        MatrixFloat matrixB = new MatrixFloat(NbLines, bSize);
 
         for (int i = 0; i < NbLines; i++)
         {
@@ -123,15 +136,124 @@ public class MatrixFloat
 
         for (int i = 0; i < NbLines; i++)
         {
-            matrixB[i, 0] = _matrix[i, columnIndex + 1];
+            for (int j = 0; j < matrixB.NbColumns; j++) {
+                matrixB[i, j] = _matrix[i, aSize + j];
+            }
         }
 
         return (matrixA, matrixB);
     }
 
+    public MatrixFloat InvertByRowReduction()
+    {
+        (MatrixFloat matrixA, MatrixFloat matrixB) = MatrixRowReductionAlgorithm.Apply(this, Identity(NbLines));
+        return matrixB;
+    }
+
+    public static MatrixFloat InvertByRowReduction(MatrixFloat matrix)
+    {
+        return matrix.InvertByRowReduction();
+    }
+
+    public MatrixFloat SubMatrix(int lineToRemove, int columnToRemove)
+    {
+        MatrixFloat subMatrix = new MatrixFloat(NbLines - 1, NbColumns - 1);
+
+        bool bReachLine = false;
+        for (int i = 0; i < NbLines; i++)
+        {
+            if (i == lineToRemove)
+            {
+                bReachLine = true;
+                continue;
+            }
+
+            bool bReachColumn = false;
+            for (int j = 0; j < NbColumns; j++)
+            {
+                if (j == columnToRemove)
+                {
+                    bReachColumn = true;
+                    continue;
+                }
+
+                subMatrix[i + (bReachLine ? -1 : 0), j + (bReachColumn ? -1 : 0)] = _matrix[i, j];
+            }
+        }
+
+        return subMatrix;
+    }
+
+    public static MatrixFloat SubMatrix(MatrixFloat matrix, int lineToRemove, int columnToRemove)
+    {
+        return matrix.SubMatrix(lineToRemove, columnToRemove);
+    }
+
+    public static float Determinant(MatrixFloat matrix)
+    {
+        if (matrix.MatrixSize == 2*2)
+        {
+            return matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0];
+        }
+
+        float det = 0;
+        for (int i = 0; i < matrix.NbColumns; i++)
+        {
+            MatrixFloat subMatrix = matrix.SubMatrix(0, i);
+            int factor = (i % 2 == 0 ? 1 : -1);
+            det += matrix[0, i] * (subMatrix[0, 0] * subMatrix[1, 1] - subMatrix[0, 1] * subMatrix[1, 0]) * factor;
+        }
+
+        return det;
+    }
+
+    public MatrixFloat Adjugate()
+    {
+        MatrixFloat adjugateMatrix = new MatrixFloat(this);
+
+        if (adjugateMatrix.MatrixSize == 2*2)
+        {
+            (adjugateMatrix[0, 0], adjugateMatrix[1, 1]) = (adjugateMatrix[1, 1], adjugateMatrix[0, 0]);
+            (adjugateMatrix[1, 0], adjugateMatrix[0, 1]) = (-adjugateMatrix[1, 0], -adjugateMatrix[0, 1]);
+            return adjugateMatrix;
+        }
+
+        return adjugateMatrix;
+    }
+
+    public static MatrixFloat Adjugate(MatrixFloat matrix)
+    {
+        return matrix.Adjugate();
+    }
+
+    public MatrixFloat InvertByDeterminant()
+    {
+        float det = Determinant(this);
+        if (det == 0)
+        {
+            throw new MatrixInvertException("Cannot invert matrix with a null determinant");
+        }
+
+        MatrixFloat invertedMatrix = new MatrixFloat(this);
+
+        if (MatrixSize == 2*2)
+        {
+            return (1/det) * invertedMatrix.Adjugate();
+        }
+
+        return (1/det) * invertedMatrix;
+    }
+
+    public static MatrixFloat InvertByDeterminant(MatrixFloat matrix)
+    {
+        return matrix.InvertByDeterminant();
+    }
+
+    #endregion
+
     #region MathFunctions
 
-    public void Multiply(int scalar)
+    public void Multiply(float scalar)
     {
         for (int i = 0; i < NbLines; i++)
         {
@@ -164,7 +286,7 @@ public class MatrixFloat
         return multipliedMatrix;
     }
 
-    public static MatrixFloat Multiply(MatrixFloat matrix, int scalar)
+    public static MatrixFloat Multiply(MatrixFloat matrix, float scalar)
     {
         MatrixFloat copyMatrix = new MatrixFloat(matrix);
         copyMatrix.Multiply(scalar);
@@ -178,7 +300,7 @@ public class MatrixFloat
 
     public void Add(MatrixFloat matrix)
     {
-        if (NbLines * NbColumns != matrix.NbLines * matrix.NbColumns)
+        if (MatrixSize != matrix.MatrixSize)
         {
             throw new MatrixSumException("Matrices does not have the same size");
         }
@@ -203,12 +325,12 @@ public class MatrixFloat
 
     #region OperatorOverload
 
-    public static MatrixFloat operator *(MatrixFloat matrix, int scalar)
+    public static MatrixFloat operator *(MatrixFloat matrix, float scalar)
     {
         return Multiply(matrix, scalar);
     }
 
-    public static MatrixFloat operator *(int scalar, MatrixFloat matrix)
+    public static MatrixFloat operator *(float scalar, MatrixFloat matrix)
     {
         return matrix * scalar;
     }
@@ -227,7 +349,7 @@ public class MatrixFloat
     {
         return matrix * -1;
     }
-    
+
     public static MatrixFloat operator -(MatrixFloat a, MatrixFloat b)
     {
         return a + (-b);

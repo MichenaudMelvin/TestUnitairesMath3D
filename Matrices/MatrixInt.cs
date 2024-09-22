@@ -2,6 +2,8 @@ namespace TestUnitaires;
 
 public class MatrixInt
 {
+    #region ClassDefaults
+
     int[,] _matrix;
 
     public int NbLines {get => _matrix.GetLength(0);}
@@ -11,6 +13,7 @@ public class MatrixInt
     {
         _matrix = newMatrix;
     }
+
     public MatrixInt(int lines, int columns)
     {
         _matrix = new int[lines, columns];
@@ -31,6 +34,10 @@ public class MatrixInt
         get { return _matrix[i, j]; }
         set { _matrix[i, j] = value; }
     }
+
+    #endregion
+
+    #region MatrixFunctions
 
     public bool IsIdentity()
     {
@@ -102,7 +109,10 @@ public class MatrixInt
 
         for (int i = 0; i < matrixB.NbLines; i++)
         {
-            augmentedMatrix[i, matrixA.NbLines] = matrixB[i, 0];
+            for (int j = 0; j < matrixB.NbColumns; j++)
+            {
+                augmentedMatrix[i, matrixA.NbLines + j] = matrixB[i, j];
+            }
         }
 
         return augmentedMatrix;
@@ -110,8 +120,10 @@ public class MatrixInt
 
     public (MatrixInt, MatrixInt) Split(int columnIndex)
     {
-        MatrixInt matrixA = new MatrixInt(NbLines, columnIndex + 1);
-        MatrixInt matrixB = new MatrixInt(NbLines, columnIndex - 1);
+        int aSize = columnIndex + 1;
+        int bSize = NbColumns - aSize;
+        MatrixInt matrixA = new MatrixInt(NbLines, aSize);
+        MatrixInt matrixB = new MatrixInt(NbLines, bSize);
 
         for (int i = 0; i < NbLines; i++)
         {
@@ -123,11 +135,15 @@ public class MatrixInt
 
         for (int i = 0; i < NbLines; i++)
         {
-            matrixB[i, 0] = _matrix[i, columnIndex + 1];
+            for (int j = 0; j < matrixB.NbColumns; j++) {
+                matrixB[i, j] = _matrix[i, aSize + j];
+            }
         }
 
         return (matrixA, matrixB);
     }
+
+    #endregion
 
     #region MathFunctions
 
