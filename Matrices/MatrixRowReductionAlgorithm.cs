@@ -22,7 +22,7 @@ public class MatrixRowReductionAlgorithm
                 }
 
                 bool bCannotBeInverted = true;
-                for (int k = 0; k < augmentedMatrix.NbLines; k++)
+                for (int k = i; k < augmentedMatrix.NbLines; k++)
                 {
                     if (augmentedMatrix[k, j] == 0)
                     {

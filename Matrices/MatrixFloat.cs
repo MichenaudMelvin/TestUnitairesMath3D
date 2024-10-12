@@ -197,6 +197,23 @@ public class MatrixFloat
         }
 
         float det = 0;
+        if (matrix.MatrixSize == 4*4)
+        {
+            for (int i = 0; i < matrix.NbColumns; i++)
+            {
+                MatrixFloat subMatrix = matrix.SubMatrix(0, i);
+                int factor = (i % 2 == 0 ? 1 : -1);
+                det += matrix[0, i] * ((subMatrix[0, 0] * subMatrix[1, 1] * subMatrix[2, 2]) -
+                                       (subMatrix[0, 0] * subMatrix[1, 2] * subMatrix[2, 1]) -
+                                       (subMatrix[0, 1] * subMatrix[1, 0] * subMatrix[2, 2]) +
+                                       (subMatrix[0, 1] * subMatrix[1, 2] * subMatrix[2, 0]) +
+                                       (subMatrix[0, 2] * subMatrix[1, 0] * subMatrix[2, 1]) -
+                                       (subMatrix[0, 2] * subMatrix[1, 1] * subMatrix[2, 0])) * factor;
+            }
+
+            return det;
+        }
+
         for (int i = 0; i < matrix.NbColumns; i++)
         {
             MatrixFloat subMatrix = matrix.SubMatrix(0, i);
@@ -218,7 +235,20 @@ public class MatrixFloat
             return adjugateMatrix;
         }
 
-        return adjugateMatrix;
+        int l = 0;
+        for (int i = 0; i < NbColumns; i++)
+        {
+            for (int j = 0; j < NbLines; j++)
+            {
+                MatrixFloat subMatrix = SubMatrix(i, j);
+                int factor = l%2 == 0 ? 1 : -1;
+                adjugateMatrix[i, j] = Determinant(subMatrix) * factor;
+                l++;
+            }
+        }
+
+        MatrixFloat cop = new MatrixFloat(adjugateMatrix);
+        return adjugateMatrix.Transpose();
     }
 
     public static MatrixFloat Adjugate(MatrixFloat matrix)
@@ -235,13 +265,7 @@ public class MatrixFloat
         }
 
         MatrixFloat invertedMatrix = new MatrixFloat(this);
-
-        if (MatrixSize == 2*2)
-        {
-            return (1/det) * invertedMatrix.Adjugate();
-        }
-
-        return (1/det) * invertedMatrix;
+        return (1/det) * invertedMatrix.Adjugate();
     }
 
     public static MatrixFloat InvertByDeterminant(MatrixFloat matrix)
