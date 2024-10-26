@@ -15,6 +15,11 @@ public class MatrixRowReductionAlgorithm
                 float maxValue = float.MinValue;
                 for (int l = i; l < augmentedMatrix.NbLines; l++)
                 {
+                    if (augmentedMatrix[l, j] == 0)
+                    {
+                        continue;
+                    }
+
                     if (augmentedMatrix[l, j] > maxValue)
                     {
                         maxValue = augmentedMatrix[l, j];

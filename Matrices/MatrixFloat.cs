@@ -30,6 +30,22 @@ public class MatrixFloat
         return _matrix;
     }
 
+    public override string ToString()
+    {
+        string output = "";
+        for (int i = 0; i < NbColumns; i++)
+        {
+            for (int j = 0; j < NbLines; j++)
+            {
+                output += _matrix[i, j].ToString() + ", ";
+            }
+
+            output += "\n";
+        }
+
+        return output;
+    }
+
     public float this[int i, int j]
     {
         get { return _matrix[i, j]; }
@@ -191,6 +207,11 @@ public class MatrixFloat
 
     public static float Determinant(MatrixFloat matrix)
     {
+        if (matrix.MatrixSize == 1*1)
+        {
+            return matrix[0, 0];
+        }
+
         if (matrix.MatrixSize == 2*2)
         {
             return matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0];
@@ -226,29 +247,24 @@ public class MatrixFloat
 
     public MatrixFloat Adjugate()
     {
-        MatrixFloat adjugateMatrix = new MatrixFloat(this);
+        MatrixFloat cofactorMatrix = new MatrixFloat(this);
 
-        if (adjugateMatrix.MatrixSize == 2*2)
-        {
-            (adjugateMatrix[0, 0], adjugateMatrix[1, 1]) = (adjugateMatrix[1, 1], adjugateMatrix[0, 0]);
-            (adjugateMatrix[1, 0], adjugateMatrix[0, 1]) = (-adjugateMatrix[1, 0], -adjugateMatrix[0, 1]);
-            return adjugateMatrix;
-        }
-
-        int l = 0;
         for (int i = 0; i < NbColumns; i++)
         {
+            bool bInvert = i % 2 != 0;
             for (int j = 0; j < NbLines; j++)
             {
                 MatrixFloat subMatrix = SubMatrix(i, j);
-                int factor = l%2 == 0 ? 1 : -1;
-                adjugateMatrix[i, j] = Determinant(subMatrix) * factor;
-                l++;
+
+                int factor = bInvert ? 
+                    j%2 != 0 ? 1 : -1 :
+                    j%2 == 0 ? 1 : -1;
+
+                cofactorMatrix[i, j] = Determinant(subMatrix) * factor;
             }
         }
 
-        MatrixFloat cop = new MatrixFloat(adjugateMatrix);
-        return adjugateMatrix.Transpose();
+        return cofactorMatrix.Transpose();
     }
 
     public static MatrixFloat Adjugate(MatrixFloat matrix)

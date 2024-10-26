@@ -59,7 +59,7 @@ public struct Transform
         }
     }
 
-    public MatrixFloat LocalRotationMatrix => _LocalRotationYMatrix * _LocalRotationXMatrix * _LocalRotationZMatrix;
+    public MatrixFloat LocalRotationMatrix => LocalRotationYMatrix * LocalRotationXMatrix * LocalRotationZMatrix;
 
     private MatrixFloat _LocalScaleMatrix;
     public MatrixFloat LocalScaleMatrix
@@ -73,7 +73,7 @@ public struct Transform
         }
     }
 
-    public MatrixFloat LocalToWorldMatrix => _LocalTranslationMatrix * LocalRotationMatrix * _LocalScaleMatrix;
+    public MatrixFloat LocalToWorldMatrix => LocalTranslationMatrix * LocalRotationMatrix * LocalScaleMatrix;
     public MatrixFloat WorldToLocalMatrix => LocalToWorldMatrix.InvertByRowReduction();
 
     private Vector3 _WorldPosition;
