@@ -64,12 +64,12 @@ public struct Quaternion
 
         float sin = (float)Math.Sin(halfAngle);
         float w = (float)Math.Cos(halfAngle);
-        Vector3 vector = axis * sin;
+        Vector3 vector = axis.Normalize() * sin;
 
         return new Quaternion(vector.x, vector.y, vector.z, w);
     }
 
-    public static Quaternion Euler(float y, float x, float z)
+    public static Quaternion Euler(float x, float y, float z)
     {
         return AngleAxis(y, new Vector3(0, 1, 0)) * AngleAxis(x, new Vector3(1, 0, 0)) * AngleAxis(z, new Vector3(0, 0, 1));
     } 
