@@ -2,7 +2,7 @@ using TestUnitaires;
 
 namespace Maths_Matrices.Tests;
 
-public struct Transform
+public class Transform
 {
     private Vector3 _LocalPosition;
     public Vector3 LocalPosition
@@ -11,21 +11,23 @@ public struct Transform
         set
         {
             _LocalPosition = value;
-            _WorldPosition = LocalPosition - _WorldPosition;
+            _WorldPosition = _LocalPosition;
         }
     }
 
     public Vector3 LocalRotation;
     public Vector3 LocalScale;
 
+    private Transform _Parent;
+
     private MatrixFloat _LocalTranslationMatrix;
     public MatrixFloat LocalTranslationMatrix
     {
         get
         {
-            _LocalTranslationMatrix[0, 3] = LocalPosition.x;
-            _LocalTranslationMatrix[1, 3] = LocalPosition.y;
-            _LocalTranslationMatrix[2, 3] = LocalPosition.z;
+            _LocalTranslationMatrix[0, 3] = WorldPosition.x; // why world
+            _LocalTranslationMatrix[1, 3] = WorldPosition.y; // why world
+            _LocalTranslationMatrix[2, 3] = WorldPosition.z; // why world
             return _LocalTranslationMatrix;
         }
         set
@@ -39,16 +41,14 @@ public struct Transform
     {
         get
         {
-            _LocalRotationXMatrix[1, 1] = (float)Math.Cos(LocalRotation.x * Math.PI / 180);
-            _LocalRotationXMatrix[1, 2] = -(float)Math.Sin(LocalRotation.x * Math.PI / 180);
-            _LocalRotationXMatrix[2, 1] = (float)Math.Sin(LocalRotation.x * Math.PI / 180);
-            _LocalRotationXMatrix[2, 2] = (float)Math.Cos(LocalRotation.x * Math.PI / 180);
+            double x = (LocalRotation.x * Math.PI) / 180;
+            _LocalRotationXMatrix[1, 1] = (float)Math.Cos(x);
+            _LocalRotationXMatrix[1, 2] = -(float)Math.Sin(x);
+            _LocalRotationXMatrix[2, 1] = (float)Math.Sin(x);
+            _LocalRotationXMatrix[2, 2] = (float)Math.Cos(x);
             return _LocalRotationXMatrix;
         }
-        set
-        {
-            LocalRotation.x = (float)(Math.Acos(value[2, 2]) * 180 / Math.PI);
-        }
+        set => LocalRotation.x = (float)(Math.Acos(value[2, 2]) * 180 / Math.PI);
     }
 
     private MatrixFloat _LocalRotationYMatrix;
@@ -56,10 +56,11 @@ public struct Transform
     {
         get
         {
-            _LocalRotationYMatrix[0, 0] = (float)Math.Cos(LocalRotation.y * Math.PI / 180);
-            _LocalRotationYMatrix[0, 2] = (float)Math.Sin(LocalRotation.y * Math.PI / 180);
-            _LocalRotationYMatrix[2, 0] = -(float)Math.Sin(LocalRotation.y * Math.PI / 180);
-            _LocalRotationYMatrix[2, 2] = (float)Math.Cos(LocalRotation.y * Math.PI / 180);
+            double y = (LocalRotation.y * Math.PI) / 180;
+            _LocalRotationYMatrix[0, 0] = (float)Math.Cos(y);
+            _LocalRotationYMatrix[0, 2] = (float)Math.Sin(y);
+            _LocalRotationYMatrix[2, 0] = -(float)Math.Sin(y);
+            _LocalRotationYMatrix[2, 2] = (float)Math.Cos(y);
             return _LocalRotationYMatrix;
         }
         set => LocalRotation.y = (float)(Math.Acos(value[0, 0]) * 180 / Math.PI);
@@ -70,10 +71,11 @@ public struct Transform
     {
         get
         {
-            _LocalRotationZMatrix[0, 0] = (float)Math.Cos(LocalRotation.z * Math.PI / 180);
-            _LocalRotationZMatrix[0, 1] = -(float)Math.Sin(LocalRotation.z * Math.PI / 180);
-            _LocalRotationZMatrix[1, 0] = (float)Math.Sin(LocalRotation.z * Math.PI / 180);
-            _LocalRotationZMatrix[1, 1] = (float)Math.Cos(LocalRotation.z * Math.PI / 180);
+            double z = (LocalRotation.z * Math.PI) / 180;
+            _LocalRotationZMatrix[0, 0] = (float)Math.Cos(z);
+            _LocalRotationZMatrix[0, 1] = -(float)Math.Sin(z);
+            _LocalRotationZMatrix[1, 0] = (float)Math.Sin(z);
+            _LocalRotationZMatrix[1, 1] = (float)Math.Cos(z);
             return _LocalRotationZMatrix;
         }
         set => LocalRotation.z = (float)(Math.Acos(value[1, 1]) * 180 / Math.PI);
@@ -112,7 +114,9 @@ public struct Transform
         set
         {
             _WorldPosition = value;
-            _LocalPosition = _WorldPosition - LocalPosition;
+
+            Vector3 divisor = _Parent == null ? Vector3.One : _Parent.LocalScale;
+            _LocalPosition = _WorldPosition - (LocalPosition / divisor);
         }
     }
 
@@ -136,10 +140,16 @@ public struct Transform
 
     public void SetParent(Transform parent)
     {
-        LocalTranslationMatrix += parent.LocalTranslationMatrix;
-        LocalRotationXMatrix *= parent.LocalRotationXMatrix;
-        LocalRotationYMatrix *= parent.LocalRotationYMatrix;
-        LocalRotationZMatrix *= parent.LocalRotationZMatrix;
-        LocalScaleMatrix *= parent.LocalScaleMatrix;
+        _Parent = parent;
+        LocalPosition *= parent.LocalScale;
+
+        // 11 + (0.707 - 1) = 10.707
+        // 5 + (0.707 - 0) = 5.707
+
+        LocalTranslationMatrix += _Parent.LocalTranslationMatrix;
+        LocalRotationXMatrix *= _Parent.LocalRotationXMatrix;
+        LocalRotationYMatrix *= _Parent.LocalRotationYMatrix;
+        LocalRotationZMatrix *= _Parent.LocalRotationZMatrix;
+        LocalScaleMatrix *= _Parent.LocalScaleMatrix;
     }
 }
